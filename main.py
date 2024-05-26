@@ -3,8 +3,9 @@ from tkinter import ttk
 from tkinter import messagebox
 import customtkinter as ctk
 import re
+import datetime
 import crud
-
+           
 
 class App:
     def __init__(self, janela):
@@ -197,7 +198,8 @@ class App:
 
         self.dt_contratacao = ctk.CTkLabel(self.frame_dados_prof, text='Data de Contratação', font=('Helvetica', 14))
         self.ent_dt_contratacao = ctk.CTkEntry(self.frame_dados_prof, width=130, 
-                                               placeholder_text='dd/mm/aaaa', corner_radius=5, height=15)      
+                                               placeholder_text='dd/mm/aaaa', corner_radius=5, height=15)
+              
 
         self.cargo = ctk.CTkLabel(self.frame_dados_prof, text='Cargo', font=('Helvetica', 14))
         self.ent_cargo = ctk.CTkEntry(self.frame_dados_prof, width=130, corner_radius=5, height=15, validate="key")
@@ -417,7 +419,34 @@ class App:
         if len(partes) == 3:
             return f"{partes[2]}/{partes[1]}/{partes[0]}"
         else:
-            return "Formato inválido"
+            return 
+
+# ---------------------------------------------------------------------------------        
+    def comparar_datas(self, data_nascimento, data_contratacao):
+        try:
+            # Converte as strings de data para objetos datetime
+            dt_nasc = datetime.datetime.strptime(data_nascimento, "%d/%m/%Y")
+            dt_cont = datetime.datetime.strptime(data_contratacao, "%d/%m/%Y")
+            hoje = datetime.datetime.today()
+
+            # Verifica se alguma das datas é futura
+            if dt_nasc > hoje:
+                messagebox.showerror("Erro de Validação", "A data de nascimento não pode ser futura.")
+                return False
+
+            if dt_cont > hoje:
+                messagebox.showerror("Erro de Validação", "A data de contratação não pode ser futura.")
+                return False
+            
+            # Compara as datas
+            if dt_cont <= dt_nasc:
+                    messagebox.showerror("Erro de Validação", "A data de contratação deve ser posterior à data de nascimento.")
+                    return False
+            return True
+        
+        except ValueError:
+            messagebox.showerror("Erro de Formato", "Formato de data inválido. Use o formato dd/mm/aaaa.")
+            return False
         
 # ---------------------------------------------------------------------------------
     def trocar_modo(self):
@@ -550,6 +579,10 @@ class App:
 
 # ---------------------------------------------------------------------------------
     def cadastrar(self):
+        data_nascimento = self.ent_dt_nasc.get()
+        data_contratacao = self.ent_dt_contratacao.get()
+        if not self.comparar_datas(data_nascimento, data_contratacao):
+            return  # Se as datas são inválidas, interrompe o cadastro
         try:
             #Pega os dados dos campos de entrada
             dados = self.pegar_dados()  # Chamada do método corrigida
@@ -585,7 +618,10 @@ class App:
                                 values=(cod, nome, cpf, rg, emissor, genero, data_nascimento, ddd, telefone, cep, cidade, estado, bairro, rua, numero, complemento, salario, data_contratacao, cargo, area, nivel))
             self.iid = self.iid + 1
             self.id = self.id + 1
+
+            messagebox.showinfo("","Dado cadastrado com sucesso")
             self.limpar()
+            
         except Exception:
             messagebox.showerror("Campo(s) inválido(s)", "Não foi possível cadastrar")
 # ---------------------------------------------------------------------------------
@@ -595,13 +631,13 @@ class App:
         self.ent_cpf.delete(0, END)
         self.ent_rg.delete(0, END)
         self.ent_orgaoEmissor.delete(0, END)
-        self.combo_genero.set('')
+        self.combo_genero.set(self.genero_lista[0])
         self.ent_dt_nasc.delete(0, END)
         self.ent_ddd.delete(0, END)
         self.ent_tel.delete(0, END)
         self.ent_cep.delete(0, END)
         self.ent_cidade.delete(0, END)
-        self.combo_estado.set('')
+        self.combo_estado.set(self.estado_lista[0])
         self.ent_bairro.delete(0, END)
         self.ent_rua.delete(0, END)
         self.ent_numero.delete(0, END)
@@ -609,8 +645,8 @@ class App:
         self.ent_salario.delete(0, END)
         self.ent_dt_contratacao.delete(0, END)
         self.ent_cargo.delete(0, END)
-        self.combo_area.set('')
-        self.combo_nivel.set('')
+        self.combo_area.set(self.area_lista[0])
+        self.combo_nivel.set(self.nivel_lista[0])
 
 # ---------------------------------------------------------------------------------
     def excluir_dados(self):
@@ -624,6 +660,7 @@ class App:
                 self.treeview.delete(*self.treeview.get_children())
                 self.carregarDadosIniciais()
                 self.limpar()
+                messagebox.showinfo("","Dado excluído com sucesso")
                 print('Produto Excluído com Sucesso!')
             else:
                 # Ação cancelada pelo usuário
@@ -634,6 +671,10 @@ class App:
 
 # ---------------------------------------------------------------------------------
     def atualizar_dados(self):
+        data_nascimento = self.ent_dt_nasc.get()
+        data_contratacao = self.ent_dt_contratacao.get()
+        if not self.comparar_datas(data_nascimento, data_contratacao):
+            return  # Se as datas são inválidas, interrompe o cadastro
         try:
             #Pega os dados dos campos de entrada
             dados = self.pegar_dados()  # Chamada do método corrigida
@@ -662,6 +703,7 @@ class App:
 
             self.Objeto.Atualizar(cod, nome, cpf, rg, emissor, genero, data_nascimento, ddd, telefone, cep, cidade, estado, bairro, rua, numero, complemento, salario, data_contratacao, cargo, area, nivel)
 
+            messagebox.showinfo("","Dado atualizado com sucesso")
             # atualizar treeview
             self.treeview.delete(*self.treeview.get_children())
             self.carregarDadosIniciais()
